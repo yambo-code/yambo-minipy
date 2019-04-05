@@ -41,12 +41,12 @@ print("DeltaT          : %f " % delta)
 
 
 for ip in range(1,npoints-1):
-    for idt in range(1,ndata):
+    for idt in range(1,ndata+1):
         data_der[ip,idt]=(data[ip+1,idt]-data[ip-1,idt])/(2.0*delta)
 
-for idt in range(1,ndata):
+for idt in range(1,ndata+1):
     data_der[0,idt]        =(data[1,idt]-data[0,idt])/(delta)
-    data_der[npoints-1,idt]=(data[npoints-1,idt]-data[npoints-2,idt])/(delta)
+    data_der[npoints-1,idt]=(data[npoints-1,idt]-data[npoints-2,idt])/float(delta)
 
 data_der[:,0]=data[:,0]
 
