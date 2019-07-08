@@ -65,12 +65,15 @@ f, Pxx_den = signal.periodogram(data[:,args.idir],1.0/(data[1,0]-data[0,0]),scal
 f=f*4.1356655385
 
 plt.figure()
-plt.semilogy(f/lfreq, Pxx_den,label='Laser freq = '+str(lfreq)+'')
-Pxx_den=Pxx_den/np.max(Pxx_den)
+plt.semilogy(f/lfreq, Pxx_den,label='Laser freq = '+str(lfreq)+' eV')
+data=np.column_stack((f/lfreq,Pxx_den))
+np.savetxt("psd.data",data)
+
+
 plt.ylim([1e-34, 10e-14])
 plt.xlim([0.1,30])
 plt.xlabel('Harmonic number')
 plt.ylabel(r"PSD $\left[\frac{V^2}{Hz}\right]$")
 plt.legend()
-plt.savefig("pdf_bnd7_10.pdf")
+plt.savefig("psd.pdf")
 plt.show()
