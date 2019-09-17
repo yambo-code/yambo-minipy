@@ -2,6 +2,7 @@
 import numpy as np
 import sys
 from pathlib import Path,os
+from shutil import copyfile
 from subprocess import check_output, CalledProcessError, STDOUT
 
 """
@@ -16,10 +17,11 @@ https://github.com/hplgit/scitools
 ########################
 # INPUT PARAMETERS     #
 ########################
-yambo_bin    = Path('/home/attacc/SOFTWARE/devel-nl/bin')
-test_folder  = Path('/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/hBN/NL/small')
-yambo_file  = "yambo_nl"
-ypp_file    = "ypp_nl"
+yambo_bin     = Path('/home/attacc/SOFTWARE/devel-nl/bin')
+test_folder   = Path('/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/hBN/NL/small')
+scratch_dir   = Path('./tmp')  #used to run the tests
+yambo_file    = "yambo_nl"
+ypp_file      = "ypp_nl"
 #########################
 
 
@@ -122,15 +124,10 @@ def os_system(command, verbose=True, failure_handling='exit', fake=False):
 
 
 
-def run(program='',options='', inputfile=''):
+def run(program='',options='', inputfile='',logfile='logfile'):
     """Run program, store output on logfile."""
     # the logfile is always opened in the constructor so
     # we can safely append here
-
-    if inputfile == '':
-        logfile="logfile"
-    else:
-        logfile=inputfile+".log"
 
     vfile = open(logfile, 'a')
     vfile.write('\n#### Test: %s' % (program+"_"+inputfile))
@@ -179,6 +176,13 @@ check_code()
 
 test_list=read_test_list()
 
+# check if scratch folder exists or create it and copy SAVE 
+new_save=scratch_dir.joinpath('SAVE/')
+Path(new_save).mkdir(parents=True,exist_ok=True)
+for p in save_dir.iterdir():
+    copyfile(p,new_save.joinpath(p.name))
+os.chdir(scratch_dir)
+
 for test in test_list:
     # ************ Running test **************
     print("Running test: "+test.name+"...", end='')
@@ -192,22 +196,21 @@ for test in test_list:
         # ********** Running Yambo ***********
         program  =yambo_bin.joinpath(yambo_file).absolute().as_posix()
 
-
     # ******** Setup flags for the test ******
     my_file = inputs_dir.joinpath(test.name+".flags")
     
-    options=''
+    options=" -I "+test_folder.absolute().as_posix()
     if my_file.is_file():
         flag_file=open(my_file,"r")
         flag=flag_file.read()
-        options=options+"-O "+flag
+        options=options+" -O "+flag
         flag_file.close()
 
-    options=options+"-J "+test.name
+    options=options+" -J "+test.name
 
-    print(program)
-    print(options)
-#    test_ok=run(program=program,options=options,inputfile=inputfile)
+#    print("\nProgram:  "+program)
+#    print("Options:  "+options)
+    test_ok=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
 
     test_ok=True
     if(test_ok):
@@ -215,4 +218,5 @@ for test in test_list:
         print(test_ok)
     else:
         print("KO!")
+    exit(0)
 #
