@@ -199,7 +199,7 @@ for test in test_list:
     # ******** Setup flags for the test ******
     my_file = inputs_dir.joinpath(test.name+".flags")
     
-    options=" -I "+test_folder.absolute().as_posix()
+    options=""
     if my_file.is_file():
         flag_file=open(my_file,"r")
         flag=flag_file.read()
@@ -218,5 +218,4 @@ for test in test_list:
         print(test_ok)
     else:
         print("KO!")
-    exit(0)
 #
