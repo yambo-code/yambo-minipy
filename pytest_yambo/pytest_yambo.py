@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 from pathlib import Path,os
-from shutil  import copyfile
-from misc    import getstatusoutput,os_system,run
+from misc    import getstatusoutput,os_system,run,copy_all_files,read_files_list
 
 """
 Simple python script to test yambo
@@ -13,22 +12,23 @@ https://github.com/hplgit/scitools
 
 """
 
-########################
-# INPUT PARAMETERS     #
-########################
+#############################################
+############# INPUT PARAMETERS ##############
+#############################################
 yambo_bin     = Path('/home/attacc/SOFTWARE/devel-nl/bin')
 test_folder   = Path('/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/hBN/NL/small')
 scratch_dir   = Path('./tmp')  #used to run the tests
 yambo_file    = "yambo_nl"
 ypp_file      = "ypp_nl"
-#########################
+tollerance    = 0.1 # between 0 and 100%
+#############################################
 
 
 inputs_dir   = test_folder.joinpath("INPUTS")
 save_dir     = test_folder.joinpath("SAVE")
 reference_dir= test_folder.joinpath("REFERENCE")
-yambo = yambo_bin.joinpath(yambo_file)
-ypp   = yambo_bin.joinpath(ypp_file)
+yambo        = yambo_bin.joinpath(yambo_file)
+ypp          = yambo_bin.joinpath(ypp_file)
 
 def check_code():
     print("Checking codes and foldes: ")
@@ -43,21 +43,7 @@ def check_code():
         print("REFERENCE folder is..."+str(reference_dir.is_dir())+"; ")
     except:
        print(" KO!\n")
-	
-def getKey(custom):
-    return custom.name
 
-def read_test_list():
-    flist = []
-    for p in inputs_dir.iterdir():
-        if p.is_file():
-            if not p.name.endswith(".flags"):
-                flist.append(p)
-
-    flist=sorted(flist,key=getKey)
-    print("\nNumber of tests: "+str(len(flist)))
-#    for test in flist: print(test)
-    return flist
 
 def convert_wf():
     print("Convert old WF ===>>> new WF....",end='')
@@ -84,13 +70,11 @@ def convert_wf():
 def copy_SAVE_and_INPUTS():
     new_save=scratch_dir.joinpath('SAVE/')
     Path(new_save).mkdir(parents=True,exist_ok=True)
-    for p in save_dir.iterdir():
-        copyfile(p,new_save.joinpath(p.name))
+    copy_all_files(save_dir,new_save)
 
-    new_inputs=scratch_dir.joinpath('INPUTS/')
-    Path(new_inputs).mkdir(parents=True,exist_ok=True)
-    for p in inputs_dir.iterdir():
-        copyfile(p,new_inputs.joinpath(p.name))
+    new_inputs_dir=scratch_dir.joinpath('INPUTS/')
+    Path(new_inputs_dir).mkdir(parents=True,exist_ok=True)
+    copy_all_files(inputs_dir,new_inputs_dir)
 
 
 # 
@@ -102,7 +86,8 @@ print("\n * * * Yambo python tests * * * \n\n")
 check_code()
 
 #read test list
-test_list=read_test_list()
+tests_list=read_files_list(inputs_dir,noext='.flags')
+print("\nNumber of tests: "+str(len(tests_list)))
 
 # copy SAVE and INPUTS in the SCRATCH directory 
 copy_SAVE_and_INPUTS()
@@ -113,8 +98,8 @@ os.chdir(scratch_dir)
 # convert the WF
 convert_wf()
 
-# start tests
-for test in test_list:
+# Run all tests
+for test in tests_list:
     # ************ Running test **************
     print("Running test: "+test.name+"...", end='')
 
@@ -128,17 +113,21 @@ for test in test_list:
         program  =yambo_bin.joinpath(yambo_file).absolute().as_posix()
 
     # ******** Setup flags for the test ******
-    my_file = Path("INPUTS/"+test.name+".flags")
+    flag_file = Path("INPUTS/"+test.name+".flags")
     
-    options=""
-    if my_file.is_file():
-        flag_file=open(my_file,"r")
-        flag=flag_file.read()
+    if flag_file.is_file():
+        flag_file=open(flag_file,"r")
+        flag=flag_file.read().strip()
         flag_file.close()
-        options=options+" -C "+test.name+" -J "+flag.strip()
-    else:
-        options=options+" -J "+test.name
+        previous_test_dir=Path(flag)
+        new_test_dir     =Path(test.name)
+        Path(new_test_dir).mkdir(parents=True,exist_ok=True)
+        copy_all_files(previous_test_dir,new_test_dir)
 
+
+    options=" -J "+test.name
+
+    # ****** run yambo or ypp *****************
     failure=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
 
     if(failure):
@@ -146,4 +135,7 @@ for test in test_list:
         exit(0)
     else:
         print("OK")
-#
+
+#********** COMPARE with references ************************
+#for test in test_list:
+

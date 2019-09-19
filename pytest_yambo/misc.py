@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 from subprocess import check_output, CalledProcessError, STDOUT
+from shutil     import copyfile
 from pathlib    import os
 
 def getstatusoutput(cmd):
@@ -107,4 +108,19 @@ def run(program='',options='', inputfile='',logfile='logfile'):
     vfile.close()
     return failure
 
+def copy_all_files(source, dest):
+    for p in source.iterdir():
+        copyfile(p,dest.joinpath(p.name))
 
+def getKey(custom):
+    return custom.name
+	
+def read_files_list(directory,noext=''):
+    flist = []
+    for p in directory.iterdir():
+        if p.is_file():
+            if noext != '' and p.name.endswith(noext):
+                continue
+        flist.append(p)
+    flist=sorted(flist,key=getKey)
+    return flist
