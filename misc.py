@@ -70,6 +70,8 @@ def run(program='',options='', inputfile='',logfile='logfile'):
     # the logfile is always opened in the constructor so
     # we can safely append here
 
+    verbose=False
+
     vfile = open(logfile, 'a')
     vfile.write('\n#### Test: %s' % (program+"_"+inputfile))
     vfile.write(' running %(program)s %(options)s\n' % vars())
@@ -78,8 +80,13 @@ def run(program='',options='', inputfile='',logfile='logfile'):
     # do not use time.clock() to measure CPU time; it will not
     # notice the CPU time(here waiting time) of a system command
     t0 = os.times()  # [user,system,cuser,csystem,elapsed]
-    cmd = '%s %s -F %s >> %s' % (program,options,inputfile,logfile)
-    failure, output = os_system(cmd, failure_handling='silent')
+
+    if inputfile == '':
+        cmd = '%s %s >> %s' % (program,options,logfile)
+    else:
+        cmd = '%s %s -F %s >> %s' % (program,options,inputfile,logfile)
+
+    failure, output = os_system(cmd, verbose=verbose, failure_handling='silent')
     if failure:
         vfile = open(logfile, 'a')
         msg = 'ERROR in execution failure arose from the ' \
@@ -98,5 +105,6 @@ def run(program='',options='', inputfile='',logfile='logfile'):
         vfile.write(' on %s %s, %s' % (u[1],u[4],u[0]))
     vfile.write('\n\n')
     vfile.close()
+    return failure
 
 

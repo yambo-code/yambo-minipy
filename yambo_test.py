@@ -59,27 +59,66 @@ def read_test_list():
 #    for test in flist: print(test)
     return flist
 
+def convert_wf():
+    print("Convert old WF ===>>> new WF....",end='')
+    program  =yambo_bin.joinpath(ypp_file).absolute().as_posix()
+    options  ="-w c"
+    failure=run(program=program,options=options,logfile="conversion_wf.log")
+    if failure: 
+        print("KO!")   
+        exit(0)
+    else:
+        print("OK")   
+
+    print("Rename FixSAVE,SAVE ===>>> SAVE, oldSAVE....",end='')
+    try:
+        oldSAVE=Path('SAVE')
+        oldSAVE.rename('oldSAVE')
+        FixSAVE=Path('FixSAVE/SAVE')
+        FixSAVE.rename('SAVE')
+    except:
+        print("KO!")
+    print("OK")
+
+
+def copy_SAVE_and_INPUTS():
+    new_save=scratch_dir.joinpath('SAVE/')
+    Path(new_save).mkdir(parents=True,exist_ok=True)
+    for p in save_dir.iterdir():
+        copyfile(p,new_save.joinpath(p.name))
+
+    new_inputs=scratch_dir.joinpath('INPUTS/')
+    Path(new_inputs).mkdir(parents=True,exist_ok=True)
+    for p in inputs_dir.iterdir():
+        copyfile(p,new_inputs.joinpath(p.name))
+
+
 # 
 # ************* MAIN PROGRAM ********************
 #
 print("\n * * * Yambo python tests * * * \n\n")
 
+#check the code
 check_code()
 
+#read test list
 test_list=read_test_list()
 
-# check if scratch folder exists or create it and copy SAVE 
-new_save=scratch_dir.joinpath('SAVE/')
-Path(new_save).mkdir(parents=True,exist_ok=True)
-for p in save_dir.iterdir():
-    copyfile(p,new_save.joinpath(p.name))
+# copy SAVE and INPUTS in the SCRATCH directory 
+copy_SAVE_and_INPUTS()
+
+# go in the SCRATCH directory
 os.chdir(scratch_dir)
 
+# convert the WF
+convert_wf()
+
+# start tests
 for test in test_list:
     # ************ Running test **************
     print("Running test: "+test.name+"...", end='')
 
-    inputfile=inputs_dir.joinpath(test.name).absolute().as_posix()
+    inputfile=Path("INPUTS/"+test.name).as_posix()
 
     if "ypp" in test.name:
         # ********* Running ypp **************
@@ -89,25 +128,22 @@ for test in test_list:
         program  =yambo_bin.joinpath(yambo_file).absolute().as_posix()
 
     # ******** Setup flags for the test ******
-    my_file = inputs_dir.joinpath(test.name+".flags")
+    my_file = Path("INPUTS/"+test.name+".flags")
     
     options=""
     if my_file.is_file():
         flag_file=open(my_file,"r")
         flag=flag_file.read()
-        options=options+" -O "+flag
         flag_file.close()
-
-    options=options+" -J "+test.name
-
-#    print("\nProgram:  "+program)
-#    print("Options:  "+options)
-    test_ok=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
-
-    test_ok=True
-    if(test_ok):
-    # *********** Compare the results ********
-        print(test_ok)
+        options=options+" -C "+test.name+" -J "+flag.strip()
     else:
+        options=options+" -J "+test.name
+
+    failure=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
+
+    if(failure):
         print("KO!")
+        exit(0)
+    else:
+        print("OK")
 #
