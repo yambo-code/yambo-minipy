@@ -98,6 +98,9 @@ os.chdir(scratch_dir)
 # convert the WF
 convert_wf()
 
+print("\n\n ********** RUNNING TESTS ***********\n\n")
+
+
 # Run all tests
 for test in tests_list:
     # ************ Running test **************
@@ -136,6 +139,8 @@ for test in tests_list:
     else:
         print("OK")
 
-#********** COMPARE with references ************************
-#for test in test_list:
+print("\n\n ********** COMPARE wiht references ***********\n\n")
+
+for test in test_list:
+    print("COMPARE TEST: "+test.name+"...", end='')
 
