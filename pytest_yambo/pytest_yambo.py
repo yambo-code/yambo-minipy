@@ -116,13 +116,16 @@ tests_list=read_files_list(inputs_dir,noext='.flags')
 print("\nNumber of tests: "+str(len(tests_list)))
 
 # copy SAVE and INPUTS in the SCRATCH directory 
-print(args.skiprun)
-if not args.skiprun:    
-    copy_SAVE_and_INPUTS()
+if not args.skiprun:
+    try:
+        copy_SAVE_and_INPUTS()
+    except:
+        print("Error copying SAVE and INPUTS folders to SCRATCH! ")
+        exit(1)
 
 # go in the SCRATCH directory
 try:
-    os.chdir(scratch_dir)
+    os.chdir(scratch_dir.as_posix())
 except:
     print("Run tests to create all the folders!")
     exit(1)
@@ -153,7 +156,7 @@ if not args.skiprun:
         flag_file = Path("INPUTS/"+test.name+".flags")
     
         if flag_file.is_file():
-            flag_file=open(flag_file,"r")
+            flag_file=open(str(flag_file),"r")
             flag=flag_file.read().strip()
             flag_file.close()
             previous_test_dir=Path(flag)

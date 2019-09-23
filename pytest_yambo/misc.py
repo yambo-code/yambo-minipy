@@ -110,11 +110,11 @@ def run(program='',options='', inputfile='',logfile='logfile'):
 
 def copy_all_files(source, dest):
     for p in source.iterdir():
-        copyfile(p,dest.joinpath(p.name))
+        copyfile(p.as_posix(),dest.joinpath(p.name).as_posix())
 
 def getKey(custom):
     return custom.name
-	
+
 def read_files_list(directory,noext='',begin=''):
     flist = []
     for p in directory.iterdir():
