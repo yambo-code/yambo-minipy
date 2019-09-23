@@ -2,6 +2,7 @@
 import numpy as np
 from pathlib import Path,os
 from misc    import getstatusoutput,os_system,run,copy_all_files,read_files_list
+import argparse
 
 """
 Simple python script to test yambo
@@ -13,22 +14,44 @@ https://github.com/hplgit/scitools
 """
 
 #############################################
-############# INPUT PARAMETERS ##############
+##### DEFAUL TINPUT PARAMETERS ##############
 #############################################
-yambo_bin     = Path('/home/attacc/SOFTWARE/devel-nl/bin')
-test_folder   = Path('/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/hBN/NL/small')
-scratch_dir   = Path('./tmp')  #used to run the tests
+yambo_dir     = '/home/attacc/SOFTWARE/devel-nl/bin'
+test_dir      = '/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/hBN/NL/small'
+scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo_nl"
 ypp_file      = "ypp_nl"
 tollerance    = 0.1 # between 0 and 100%
 #############################################
 
+# ########################################
+# ############## parse command line ######
+# ########################################
+parser = argparse.ArgumentParser(prog='pytest_yambo',description='Simple python driver for the yambo-tests',epilog="Copyright Claudio Attaccalite 2019")
+parser.add_argument('-t',    help='tollerance (between 0 - 100%%)' ,type=float,dest='tollerance',default=tollerance)
+parser.add_argument('-s',    help='scratch directory' ,type=str,dest='scratch'    ,default=scratch)
+parser.add_argument('-test', help='test directory' ,type=str,dest='test_folder',default=test_dir)
+parser.add_argument('-bin',  help='yambo bin directory' ,type=str,dest='yambo_dir',default=yambo_dir)
+parser.add_argument('-yambo',help='yambo executable' ,type=str,dest='yambo_file',default=yambo_file)
+parser.add_argument('-ypp ', help='ypp exectuable' ,type=str,dest='ypp_file',default=ypp_file)
+parser.add_argument('-skip-run',help='skip runs just compare the results',dest='skiprun',action='store_true')
+parser.add_argument('-skip-comp',help='skip comparison just run the tests',dest='skipcomp',action='store_true')
+parser.set_defaults(skiprun =False)
+parser.set_defaults(skipcomp=False)
+
+args = parser.parse_args()
+tollerance     = float(args.tollerance)
+scratch_dir    = Path(args.scratch)  #used to run the tests
+test_folder    = Path(args.test_folder)
+yambo_bin      = Path(args.yambo_dir)
+yambo          = yambo_bin.joinpath(args.yambo_file)
+ypp            = yambo_bin.joinpath(args.ypp_file)
 
 inputs_dir   = test_folder.joinpath("INPUTS")
 save_dir     = test_folder.joinpath("SAVE")
 reference_dir= test_folder.joinpath("REFERENCE")
-yambo        = yambo_bin.joinpath(yambo_file)
-ypp          = yambo_bin.joinpath(ypp_file)
+
+##########################################
 
 def check_code():
     print("Checking codes and foldes: ")
@@ -43,11 +66,12 @@ def check_code():
         print("REFERENCE folder is..."+str(reference_dir.is_dir())+"; ")
     except:
        print(" KO!\n")
+       exit(1)
 
 
 def convert_wf():
     print("Convert old WF ===>>> new WF....",end='')
-    program  =yambo_bin.joinpath(ypp_file).absolute().as_posix()
+    program  =ypp.absolute().as_posix()
     options  ="-w c"
     failure=run(program=program,options=options,logfile="conversion_wf.log")
     if failure: 
@@ -64,6 +88,7 @@ def convert_wf():
         FixSAVE.rename('SAVE')
     except:
         print("KO!")
+        exit(1)
     print("OK")
 
 
@@ -90,57 +115,65 @@ tests_list=read_files_list(inputs_dir,noext='.flags')
 print("\nNumber of tests: "+str(len(tests_list)))
 
 # copy SAVE and INPUTS in the SCRATCH directory 
-copy_SAVE_and_INPUTS()
+print(args.skiprun)
+if not args.skiprun:    
+    copy_SAVE_and_INPUTS()
 
 # go in the SCRATCH directory
-os.chdir(scratch_dir)
+try:
+    os.chdir(scratch_dir)
+except:
+    print("Run tests to create all the folders!")
+    exit(1)
 
 # convert the WF
-convert_wf()
+if not args.skiprun: convert_wf()
 
 print("\n\n ********** RUNNING TESTS ***********\n\n")
 
 
-# Run all tests
-for test in tests_list:
-    # ************ Running test **************
-    print("Running test: "+test.name+"...", end='')
+if not args.skiprun:
+    # Run all tests
+    for test in tests_list:
+        # ************ Running test **************
+        print("Running test: "+test.name+"...", end='')
 
-    inputfile=Path("INPUTS/"+test.name).as_posix()
+        inputfile=Path("INPUTS/"+test.name).as_posix()
 
-    if "ypp" in test.name:
-        # ********* Running ypp **************
-        program  =yambo_bin.joinpath(ypp_file).absolute().as_posix()
-    else:
-        # ********** Running Yambo ***********
-        program  =yambo_bin.joinpath(yambo_file).absolute().as_posix()
+        if "ypp" in test.name:
+            # ********* Running ypp **************
+            program  =ypp.absolute().as_posix()
+        else:
+            # ********** Running Yambo ***********
+            program  =yambo.absolute().as_posix()
 
-    # ******** Setup flags for the test ******
-    flag_file = Path("INPUTS/"+test.name+".flags")
+        # ******** Setup flags for the test ******
+        flag_file = Path("INPUTS/"+test.name+".flags")
     
-    if flag_file.is_file():
-        flag_file=open(flag_file,"r")
-        flag=flag_file.read().strip()
-        flag_file.close()
-        previous_test_dir=Path(flag)
-        new_test_dir     =Path(test.name)
-        Path(new_test_dir).mkdir(parents=True,exist_ok=True)
-        copy_all_files(previous_test_dir,new_test_dir)
+        if flag_file.is_file():
+            flag_file=open(flag_file,"r")
+            flag=flag_file.read().strip()
+            flag_file.close()
+            previous_test_dir=Path(flag)
+            new_test_dir     =Path(test.name)
+            Path(new_test_dir).mkdir(parents=True,exist_ok=True)
+            copy_all_files(previous_test_dir,new_test_dir)
 
 
-    options=" -J "+test.name
+        options=" -J "+test.name
 
     # ****** run yambo or ypp *****************
-    failure=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
+        failure=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
 
-    if(failure):
-        print("KO!")
-        exit(0)
-    else:
-        print("OK")
+        if(failure):
+            print("KO!")
+            exit(1)
+        else:
+            print("OK")
 
-print("\n\n ********** COMPARE wiht references ***********\n\n")
-
-for test in test_list:
-    print("COMPARE TEST: "+test.name+"...", end='')
+if not args.skipcomp:
+    print("\n\n ********** COMPARE wiht references ***********\n\n")
+    
+    for test in test_list:
+        print("COMPARE TEST: "+test.name+"...", end='')
 
