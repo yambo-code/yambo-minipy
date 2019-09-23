@@ -22,6 +22,7 @@ scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo_nl"
 ypp_file      = "ypp_nl"
 tollerance    = 0.1 # between 0 and 100%
+zero_dfl      = 1e-11
 #############################################
 
 # ########################################
@@ -129,11 +130,12 @@ except:
 # convert the WF
 if not args.skiprun: convert_wf()
 
-print("\n\n ********** RUNNING TESTS ***********\n\n")
-
 
 if not args.skiprun:
+    #
     # Run all tests
+    print("\n\n ********** RUNNING TESTS ***********\n\n")
+    #
     for test in tests_list:
         # ************ Running test **************
         print("Running test: "+test.name+"...", end='')
@@ -172,8 +174,33 @@ if not args.skiprun:
             print("OK")
 
 if not args.skipcomp:
-    print("\n\n ********** COMPARE wiht references ***********\n\n")
-    
-    for test in test_list:
-        print("COMPARE TEST: "+test.name+"...", end='')
+    print("\n\n ********** COMPARE wiht references ***********\n")
+    reference_list=read_files_list(reference_dir,begin='o-')
+
+    for ref in reference_list:
+        print("CHECK FILE: "+ref.name+"...", end='')
+
+        if '.ndb' in ref.name:
+            print("Database test not implemented yet!")
+            continue
+
+        # Open reference file
+        ref_file=reference_dir.joinpath(ref.name).as_posix()
+        ref_data=np.genfromtxt(ref_file)
+
+        # Open test file
+        try:
+            test_data=np.genfromtxt(ref.name)
+        except:
+            print("... not found!!")
+            continue
+
+        # Compare data
+        for col in range(ref_data.shape[1]):
+           diff = np.where(abs(ref_data[:,col])>zero_dfl,abs(ref_data[:,col]-test_data[:,col])/ref_data[:,col],0)
+           if np.any(diff>tollerance):
+                print("\n    Error in column %d difference larger than %f! " % (col,tollerance),end='') 
+
+        del ref_data,test_data
+        print("Done")
 

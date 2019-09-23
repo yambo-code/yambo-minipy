@@ -115,11 +115,13 @@ def copy_all_files(source, dest):
 def getKey(custom):
     return custom.name
 	
-def read_files_list(directory,noext=''):
+def read_files_list(directory,noext='',begin=''):
     flist = []
     for p in directory.iterdir():
         if p.is_file():
             if noext != '' and p.name.endswith(noext):
+                continue
+            if begin != '' and not p.name.startswith(begin):
                 continue
         flist.append(p)
     flist=sorted(flist,key=getKey)
