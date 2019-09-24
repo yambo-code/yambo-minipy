@@ -23,7 +23,8 @@ scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo_nl"
 ypp_file      = "ypp_nl"
 tollerance    = 0.1 # between 0 and 100%
-zero_dfl      = 1e-11
+zero_dfl      = 1e-10
+too_large     = 10e99
 #############################################
 
 # ########################################
@@ -184,11 +185,20 @@ if not args.skipcomp:
     print("\n\n ********** COMPARE wiht references ***********\n")
     reference_list=read_files_list(reference_dir,begin='o-')
 
+    test_total   =0
+    test_ok      =0
+    test_failed  =0
+    test_nan     =0
+    test_notfound=0
+    
+    log_file=open("tests.log","w")
+
     for ref in reference_list:
-        print("CHECK FILE: "+ref.name+"...", end='')
+        print("CHECK FILE: "+ref.name+"...")
+        log_file.write("CHECK FILE: "+ref.name+"...\n")
 
         if '.ndb' in ref.name:
-            print("Database test not implemented yet!")
+            log_file.write("     database test not implemented yet! \n")
             continue
 
         # Open reference file
@@ -199,15 +209,42 @@ if not args.skipcomp:
         try:
             test_data=np.genfromtxt(ref.name)
         except:
-            print("... not found!!")
+            log_file.write("    file not found!!\n")
+            test_notfound += 1
             continue
 
         # Compare data
         for col in range(ref_data.shape[1]):
-           diff = np.where(abs(ref_data[:,col])>zero_dfl,abs(ref_data[:,col]-test_data[:,col])/ref_data[:,col],0)
+           test_total += 1
+           log_file.write("     column %d ...." % (col+1))
+           if np.any(abs(test_data[:,col])>too_large) or np.any(np.isnan(test_data[:,col])):
+                log_file.write("NaN or too large number! \n")
+                test_nan += 1
+                continue
+
+           diff=abs(ref_data[:,col]-test_data[:,col])
+           for row in range(ref_data.shape[0]):
+                if abs(ref_data[row,col])>zero_dfl:
+                   diff[row] = diff[row]/ref_data[row,col]
+
            if np.any(diff>tollerance):
-                print("\n    Error in column %d difference larger than %f! " % (col,tollerance),end='') 
+                log_file.write("Error difference larger than %f! " % (tollerance))
+                test_failed +=1
+                continue
+           del diff
+           test_ok += 1
+           log_file.write("OK\n")
 
         del ref_data,test_data
-        print("Done")
+
+    report="\n\n             **** REPORT ****\n"
+    report+=" Files not found         : %d \n" % test_notfound
+    report+=" Total tests             : %d \n" % test_total
+    report+=" Failed tests            : %d \n" % test_failed
+    report+=" NaN or too large values : %d \n" % test_nan
+    report+=" Tests OK                : %d \n" % test_ok
+
+    print(report)
+    log_file.write(report)
+    log_file.close()
 
