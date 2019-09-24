@@ -23,7 +23,7 @@ scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo_nl"
 ypp_file      = "ypp_nl"
 tollerance    = 0.1 # between 0 and 100%
-zero_dfl      = 1e-10
+zero_dfl      = 1e-6
 too_large     = 10e99
 #############################################
 
@@ -190,7 +190,7 @@ if not args.skipcomp:
     test_failed  =0
     test_nan     =0
     test_notfound=0
-    
+
     log_file=open("tests.log","w")
 
     for ref in reference_list:
@@ -213,8 +213,12 @@ if not args.skipcomp:
             test_notfound += 1
             continue
 
-        # Compare data
-        for col in range(ref_data.shape[1]):
+        # Renormalize data to have 1 as maximum
+        maxval=np.amax(ref_data[:,1:])
+        if maxval==0.0: maxval=1.0
+
+        # Compare data column by column
+        for col in range(1,ref_data.shape[1]):
            test_total += 1
            log_file.write("     column %d ...." % (col+1))
            if np.any(abs(test_data[:,col])>too_large) or np.any(np.isnan(test_data[:,col])):
@@ -222,13 +226,14 @@ if not args.skipcomp:
                 test_nan += 1
                 continue
 
-           diff=abs(ref_data[:,col]-test_data[:,col])
+
+           diff=abs(ref_data[:,col]-test_data[:,col])/maxval
            for row in range(ref_data.shape[0]):
-                if abs(ref_data[row,col])>zero_dfl:
-                   diff[row] = diff[row]/ref_data[row,col]
+                if abs(ref_data[row,col]/maxval)>zero_dfl:
+                   diff[row] = diff[row]/(ref_data[row,col]/maxval)
 
            if np.any(diff>tollerance):
-                log_file.write("Error difference larger than %f! " % (tollerance))
+                log_file.write("Error difference larger than %f! \n" % (tollerance))
                 test_failed +=1
                 continue
            del diff
