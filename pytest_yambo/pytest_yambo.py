@@ -2,6 +2,7 @@
 import numpy as np
 from pathlib import Path,os
 from misc    import getstatusoutput,os_system,run,copy_all_files,read_files_list
+import sys
 import argparse
 
 """
@@ -72,7 +73,7 @@ def check_code():
 
 def convert_wf():
     print("Convert old WF ===>>> new WF....",end='')
-    program  =ypp.absolute().as_posix()
+    program  =str(ypp)
     options  ="-w c"
     failure=run(program=program,options=options,logfile="conversion_wf.log")
     if failure: 
@@ -108,6 +109,9 @@ def copy_SAVE_and_INPUTS():
 #
 print("\n * * * Yambo python tests * * * \n\n")
 
+if sys.version_info[0] < 3:
+    raise Exception("Must be using Python 3")
+
 #check the code
 check_code()
 
@@ -125,7 +129,7 @@ if not args.skiprun:
 
 # go in the SCRATCH directory
 try:
-    os.chdir(scratch_dir.as_posix())
+    os.chdir(str(scratch_dir))
 except:
     print("Run tests to create all the folders!")
     exit(1)
@@ -147,10 +151,10 @@ if not args.skiprun:
 
         if "ypp" in test.name:
             # ********* Running ypp **************
-            program  =ypp.absolute().as_posix()
+            program  =str(ypp)
         else:
             # ********** Running Yambo ***********
-            program  =yambo.absolute().as_posix()
+            program  =str(yambo)
 
         # ******** Setup flags for the test ******
         flag_file = Path("INPUTS/"+test.name+".flags")
@@ -189,7 +193,7 @@ if not args.skipcomp:
 
         # Open reference file
         ref_file=reference_dir.joinpath(ref.name).as_posix()
-        ref_data=np.genfromtxt(ref_file)
+        ref_data=np.genfromtxt(str(ref_file))
 
         # Open test file
         try:
