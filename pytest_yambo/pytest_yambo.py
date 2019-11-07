@@ -17,11 +17,11 @@ https://github.com/hplgit/scitools
 #############################################
 ##### DEFAUL TINPUT PARAMETERS ##############
 #############################################
-yambo_dir     = '/home/attacc/SOFTWARE/devel-nl/bin'
-test_dir      = '/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/hBN/NL/small'
+yambo_dir     = '/home/attacc/SOFTWARE/devel-simpler-input/bin'
+test_dir      = '/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/LiF/PIPPO'
 scratch       = './tmp'  #used to run the tests
-yambo_file    = "yambo_nl"
-ypp_file      = "ypp_nl"
+yambo_file    = "yambo"
+ypp_file      = "ypp"
 tollerance    = 0.1 # between 0 and 100%
 zero_dfl      = 1e-6
 too_large     = 10e99
@@ -74,6 +74,9 @@ def check_code():
 
 def convert_wf():
     print("Convert old WF ===>>> new WF....",end='')
+    program  =str(yambo)
+    options  =""
+    failure=run(program=program,options=options,logfile="conversion_wf.log")
     program  =str(ypp)
     options  ="-w c"
     failure=run(program=program,options=options,logfile="conversion_wf.log")
