@@ -22,6 +22,9 @@ test_dir      = '/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/LiF/PIPPO'
 scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo"
 ypp_file      = "ypp"
+nprocs        = 1
+#mpirun        = "mpirun -np "+str(nprocs)+"  "
+mpirun        = ""
 tollerance    = 0.1 # between 0 and 100%
 zero_dfl      = 1e-6
 too_large     = 10e99
@@ -158,7 +161,10 @@ if not args.skiprun:
             program  =str(ypp)
         else:
             # ********** Running Yambo ***********
-            program  =str(yambo)
+            if(mpirun/=""):
+                program = mpirun+str(yambo)
+            else:
+                program = str(yambo)
 
         # ******** Setup flags for the test ******
         flag_file = Path("INPUTS/"+test.name+".flags")
@@ -176,7 +182,7 @@ if not args.skiprun:
         options=" -J "+test.name
 
     # ****** run yambo or ypp *****************
-        failure=run(program=program,options=options,inputfile=inputfile,logfile=test.name+".log")
+        failure=run(program=mpirun,options=options,inputfile=inputfile,logfile=test.name+".log")
 
         if(failure):
             print("KO!")
