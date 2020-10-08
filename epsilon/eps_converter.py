@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 """      AUTHOR: Claudio Attaccalite
          CREATED: 27/07/2012
          LAST MODIFIED: 27/07/2012 """
@@ -28,7 +28,7 @@ def Read_Epsilon(path,filename):
     try:
         f=open(infile,'r')
     except:
-        print " Error opening: %s " % infile
+        print(" Error opening: %s " % infile)
         exit(0)
 
     lines=f.readlines()
@@ -41,9 +41,9 @@ def Read_Epsilon(path,filename):
     if match: 
         if match.group(1): nsteps=int(match.group(1))
         else: nsteps=int(match.group(2))
-        print " Number of points: %d " % nsteps
+        print(" Number of points: %d " % nsteps)
     else:
-        print " Wrong dielectric constant file! "
+        print(" Wrong dielectric constant file! ")
         exit(0)
 
     comments =[]
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         parser.print_help()
         exit(0)
     else:
-        print '\n\n Read and convert dielectric constant (yambo) \n'
+        print('\n\n Read and convert dielectric constant (yambo) \n')
 
     comments,energy,eps_im,eps_re,eps0_im,eps0_re=Read_Epsilon(args.path,args.filename)
     
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     
     fname,headers,out_im,out_re,out0_im,out0_re=function(energy, eps_im,eps_re,eps0_im,eps0_re)
 
-    print " output : %s \n" % ("o."+fname)
+    print(" output : %s \n" % ("o."+fname))
 
     outfile=open("o."+fname,'w')
     outfile.write("#\n#\n# "+fname+" from "+args.path+"/"+args.filename+"#\n#\n#\n")
