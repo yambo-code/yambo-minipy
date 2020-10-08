@@ -36,7 +36,7 @@ def Read_Epsilon(path,filename):
     pattern1=r'\s*ETStpsXd\s*=\s*(\d*)'
     pattern2=r'\s*BEnSteps\s*=\s*(\d*)'
     pattern=pattern1 + '|' + pattern2
-    match = re.search(pattern, string.join(lines), re.MULTILINE)
+    match = re.search(pattern, " ".join(lines), re.MULTILINE)
 
     if match: 
         if match.group(1): nsteps=int(match.group(1))
