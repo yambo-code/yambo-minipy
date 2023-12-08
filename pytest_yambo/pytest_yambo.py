@@ -17,8 +17,8 @@ https://github.com/hplgit/scitools
 #############################################
 ##### DEFAUL TINPUT PARAMETERS ##############
 #############################################
-yambo_dir     = '/home/attacc/SOFTWARE/devel-simpler-input/bin'
-test_dir      = '/home/attacc/SOFTWARE/yambo-tests/TESTS/MAIN/LiF/PIPPO'
+yambo_dir     = '/home/attacc/SOFTWARE/yambo-bugfixes/bin'
+test_dir      = '/home/attacc/TESTS/yambo-tests/TESTS/MAIN/hBN/GW-OPTICS'
 scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo"
 ypp_file      = "ypp"
@@ -29,7 +29,7 @@ tollerance    = 0.1 # between 0 and 100%
 zero_dfl      = 1e-6
 too_large     = 10e99
 #############################################
-                2
+                
 # ########################################
 # ############## parse command line ######
 # ########################################
@@ -55,6 +55,7 @@ ypp            = yambo_bin.joinpath(args.ypp_file)
 
 inputs_dir   = test_folder.joinpath("INPUTS")
 save_dir     = test_folder.joinpath("SAVE")
+save_conv_dir= test_folder.joinpath("SAVE_converted")
 reference_dir= test_folder.joinpath("REFERENCE")
 
 ##########################################
@@ -68,6 +69,7 @@ def check_code():
         print("Ypp is..."+str(ypp.exists()))
         print("\nChecking sub-folders: ")
         print("SAVE folder is..."+str(save_dir.is_dir())+"; ", end = '')
+        print("SAVE_converted folder is..."+str(save_conv_dir.is_dir())+"; ", end = '')
         print("INPUTS folder is..."+str(inputs_dir.is_dir())+"; ", end = '')
         print("REFERENCE folder is..."+str(reference_dir.is_dir())+"; ")
     except:
@@ -77,23 +79,24 @@ def check_code():
 
 def convert_wf():
     print("Convert old WF ===>>> new WF....",end='')
-    program  =str(yambo)
-    options  =""
-    failure=run(program=program,options=options,logfile="conversion_wf.log")
-    program  =str(ypp)
-    options  ="-w c"
-    failure=run(program=program,options=options,logfile="conversion_wf.log")
-    if failure: 
-        print("KO!")   
-        exit(0)
-    else:
-        print("OK")   
+#    program  =str(yambo)
+#    options  =""
+#    failure=run(program=program,options=options,logfile="conversion_wf.log")
+#    program  =str(ypp)
+#    options  ="-w c"
+#    failure=run(program=program,options=options,logfile="conversion_wf.log")
+#    if failure: 
+#        print("KO!")   
+#        exit(0)
+#    else:
+#        print("OK")   
 
-    print("Rename FixSAVE,SAVE ===>>> SAVE, oldSAVE....",end='')
+#    print("Rename FixSAVE,SAVE ===>>> SAVE, oldSAVE....",end='')
+    print("Rename SAVE_converted,SAVE ===>>> SAVE, oldSAVE....",end='')
     try:
         oldSAVE=Path('SAVE')
         oldSAVE.rename('oldSAVE')
-        FixSAVE=Path('FixSAVE/SAVE')
+        FixSAVE=Path('SAVE_converted')
         FixSAVE.rename('SAVE')
     except:
         print("KO!")
@@ -105,6 +108,10 @@ def copy_SAVE_and_INPUTS():
     new_save=scratch_dir.joinpath('SAVE/')
     Path(new_save).mkdir(parents=True,exist_ok=True)
     copy_all_files(save_dir,new_save)
+
+    new_save_conv=scratch_dir.joinpath('SAVE_converted/')
+    Path(new_save_conv).mkdir(parents=True,exist_ok=True)
+    copy_all_files(save_conv_dir,new_save_conv)
 
     new_inputs_dir=scratch_dir.joinpath('INPUTS/')
     Path(new_inputs_dir).mkdir(parents=True,exist_ok=True)
@@ -161,7 +168,7 @@ if not args.skiprun:
             program  =str(ypp)
         else:
             # ********** Running Yambo ***********
-            if(mpirun/=""):
+            if not mpirun=="":
                 program = mpirun+str(yambo)
             else:
                 program = str(yambo)
