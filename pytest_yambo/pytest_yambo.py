@@ -18,7 +18,7 @@ https://github.com/hplgit/scitools
 ##### DEFAUL TINPUT PARAMETERS ##############
 #############################################
 yambo_dir     = '/home/attacc/SOFTWARE/yambo-bugfixes/bin'
-test_dir      = '/home/attacc/TESTS/yambo-tests/TESTS/MAIN/hBN/GW-OPTICS'
+test_dir      = '/home/attacc/TESTS/yambo-tests/TESTS/MAIN/Al_bulk/GW-OPTICS/'
 scratch       = './tmp'  #used to run the tests
 yambo_file    = "yambo"
 ypp_file      = "ypp"
