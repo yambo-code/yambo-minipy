@@ -64,14 +64,15 @@ for dim in range(3):
         P[2,freq,dim] = XHI_R3[1,freq,dim]/Divide_by_the_Field(NLDB3.Efield[0],1)/get_Unit_of_Measure(1)  # E/4
         
 
-fig, ax = plt.subplots()
-ax.plot(freqs*ha2ev,P[0,:,0].real)
-ax.plot(freqs*ha2ev,P[0,:,0].imag)
-ax.plot(freqs*ha2ev,P[1,:,0].real)
-ax.plot(freqs*ha2ev,P[1,:,0].imag)
-ax.plot(freqs*ha2ev,P[2,:,0].real)
-ax.plot(freqs*ha2ev,P[2,:,0].imag)
-plt.show()
+# fig, ax = plt.subplots()
+# ax.plot(freqs*ha2ev,P[0,:,0].real,label="Re{$P(E; \omega)}")
+# ax.plot(freqs*ha2ev,P[0,:,0].imag)
+# ax.plot(freqs*ha2ev,P[1,:,0].real)
+# ax.plot(freqs*ha2ev,P[1,:,0].imag)
+# ax.plot(freqs*ha2ev,P[2,:,0].real)
+# ax.plot(freqs*ha2ev,P[2,:,0].imag)
+# ax.legend(loc="upper left")
+# plt.show()
 
 
 print("\nWriting X3...\n")
